@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi-Player Chess Timer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      color: #333;
+    }
+    #setup, #game {
+      max-width: 500px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    label {
+      margin: 10px 0;
+      display: block;
+    }
+    input[type="number"] {
+      width: 100px;
+      padding: 5px;
+      font-size: 16px;
+    }
+    button {
+      margin: 10px 5px;
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      background-color: #007BFF;
+      color: white;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .player {
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #fafafa;
+    }
+    .active {
+      background: #e0ffe0;
+      border-color: #a0dca0;
+    }
+    .timer {
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Multi-Player Chess Timer</h1>
+  <div id="setup">
+    <label>
+      Number of Players:
+      <input type="number" id="numPlayers" min="2" value="2">
+    </label>
+    <label>
+      Time per Player (seconds):
+      <input type="number" id="timePerPlayer" min="10" value="300">
+    </label>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="game" style="display: none;">
+    <div id="players"></div>
+    <button onclick="nextTurn()">Next Turn</button>
+  </div>
+
+  <script>
+    let players = [];
+    let currentPlayer = 0;
+    let timerInterval = null;
+
+    // Format seconds into mm:ss
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    // Render player clocks and highlight active player
+    function renderPlayers() {
+      const playersDiv = document.getElementById('players');
+      playersDiv.innerHTML = '';
+      players.forEach((player, index) => {
+        const playerDiv = document.createElement('div');
+        playerDiv.className = 'player' + (index === currentPlayer ? ' active' : '');
+        playerDiv.innerHTML = `<h2>Player ${index + 1}</h2>
+                               <p class="timer" id="timer-${index}">${formatTime(player.time)}</p>`;
+        playersDiv.appendChild(playerDiv);
+      });
+    }
+
+    // Start or restart the timer for the current player
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (players[currentPlayer].time > 0) {
+          players[currentPlayer].time--;
+          document.getElementById(`timer-${currentPlayer}`).textContent = formatTime(players[currentPlayer].time);
+        } else {
+          clearInterval(timerInterval);
+          alert(`Player ${currentPlayer + 1} ran out of time!`);
+        }
+      }, 1000);
+    }
+
+    // Initialize the game state and UI
+    function startGame() {
+      const numPlayers = parseInt(document.getElementById('numPlayers').value);
+      const timePerPlayer = parseInt(document.getElementById('timePerPlayer').value);
+      players = [];
+      for (let i = 0; i < numPlayers; i++) {
+        players.push({ time: timePerPlayer });
+      }
+      currentPlayer = 0;
+      document.getElementById('setup').style.display = 'none';
+      document.getElementById('game').style.display = 'block';
+      renderPlayers();
+      startTimer();
+    }
+
+    // Move to the next player's turn
+    function nextTurn() {
+      clearInterval(timerInterval);
+      currentPlayer = (currentPlayer + 1) % players.length;
+      renderPlayers();
+      startTimer();
+    }
+  </script>
+</body>
+</html>
