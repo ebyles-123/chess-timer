@@ -27,8 +27,9 @@
       margin: 10px 0;
       display: block;
     }
-    input[type="number"] {
-      width: 100px;
+    input[type="number"],
+    input[type="text"] {
+      width: 150px;
       padding: 5px;
       font-size: 16px;
     }
@@ -67,12 +68,18 @@
   <div id="setup">
     <label>
       Number of Players:
-      <input type="number" id="numPlayers" min="2" value="2">
+      <input type="number" id="numPlayers" min="2" value="2" onchange="generatePlayerNameFields()">
     </label>
     <label>
-      Time per Player (seconds):
-      <input type="number" id="timePerPlayer" min="10" value="300">
+      Time per Player (minutes):
+      <input type="number" id="timePerPlayer" min="1" value="5">
     </label>
+    <label>
+      <input type="checkbox" id="advancedSetup" onchange="toggleAdvancedSetup()"> Advanced Setup: Enter Player Names
+    </label>
+    <div id="playerNames" style="display: none;">
+      <!-- Player name inputs will be generated here -->
+    </div>
     <button onclick="startGame()">Start Game</button>
   </div>
 
@@ -100,7 +107,7 @@
       players.forEach((player, index) => {
         const playerDiv = document.createElement('div');
         playerDiv.className = 'player' + (index === currentPlayer ? ' active' : '');
-        playerDiv.innerHTML = `<h2>Player ${index + 1}</h2>
+        playerDiv.innerHTML = `<h2>${player.name}</h2>
                                <p class="timer" id="timer-${index}">${formatTime(player.time)}</p>`;
         playersDiv.appendChild(playerDiv);
       });
@@ -115,18 +122,53 @@
           document.getElementById(`timer-${currentPlayer}`).textContent = formatTime(players[currentPlayer].time);
         } else {
           clearInterval(timerInterval);
-          alert(`Player ${currentPlayer + 1} ran out of time!`);
+          alert(`${players[currentPlayer].name} ran out of time!`);
         }
       }, 1000);
+    }
+
+    // Generate player name input fields if advanced setup is enabled
+    function generatePlayerNameFields() {
+      const numPlayers = parseInt(document.getElementById('numPlayers').value);
+      const playerNamesDiv = document.getElementById('playerNames');
+      playerNamesDiv.innerHTML = '';
+      for (let i = 0; i < numPlayers; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Player ${i + 1} (optional)`;
+        input.id = `playerName-${i}`;
+        playerNamesDiv.appendChild(input);
+        playerNamesDiv.appendChild(document.createElement('br'));
+      }
+    }
+
+    function toggleAdvancedSetup() {
+      const advanced = document.getElementById('advancedSetup').checked;
+      const playerNamesDiv = document.getElementById('playerNames');
+      if (advanced) {
+        playerNamesDiv.style.display = 'block';
+        generatePlayerNameFields();
+      } else {
+        playerNamesDiv.style.display = 'none';
+      }
     }
 
     // Initialize the game state and UI
     function startGame() {
       const numPlayers = parseInt(document.getElementById('numPlayers').value);
-      const timePerPlayer = parseInt(document.getElementById('timePerPlayer').value);
+      // Read time in minutes and convert to seconds
+      const timePerPlayer = parseInt(document.getElementById('timePerPlayer').value) * 60;
+      const advanced = document.getElementById('advancedSetup').checked;
       players = [];
       for (let i = 0; i < numPlayers; i++) {
-        players.push({ time: timePerPlayer });
+        let name = `Player ${i + 1}`;
+        if (advanced) {
+          const inputName = document.getElementById(`playerName-${i}`).value;
+          if (inputName.trim() !== '') {
+            name = inputName.trim();
+          }
+        }
+        players.push({ name: name, time: timePerPlayer });
       }
       currentPlayer = 0;
       document.getElementById('setup').style.display = 'none';
